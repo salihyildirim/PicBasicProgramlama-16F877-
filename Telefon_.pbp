@@ -1,0 +1,104 @@
+'****************************************************************
+'*  Name    : UNTITLED.BAS                                      *
+'*  Author  : Salih                                             *
+'*  Notice  : Copyright (c) 2020 [select VIEW...EDITOR OPTIONS] *
+'*          : All Rights Reserved                               *
+'*  Date    : 22.6.2020                                         *
+'*  Version : 1.0                                               *
+'*  Notes   :                                                   *
+'*          :                                                   *
+'****************************************************************
+DEFINE LCD_DREG PORTD
+DEFINE LCD_DBIT 0
+DEFINE LCD_RSREG PORTE
+DEFINE LCD_RSBIT 0
+DEFINE LCD_EREG PORTE
+DEFINE LCD_EBIT 2
+DEFINE LCD_BITS 8
+ADCON1=7
+PAUSE 100
+DEFINE HSER_RCSTA 90h
+DEFINE HSER_TXSTA 24h
+DEFINE HSER_BAUD 9600
+DEFINE HSER_CLROERR 1
+
+p var byte   'Read ile alýnan 
+i var byte
+j var byte
+t var byte
+s var byte
+n var byte
+j=0  'adresler (0-10)
+i=0  '11 oldu mu? (sayaç)
+t=128 'LCD için satýr baþlangýç
+s=10  'tuþa basýldý mý kontrolü için
+n=0   'terminale yazdýrýrkenki döngü için
+
+TRISB=%11111000
+symbol sutun1=portB.0
+symbol sutun2=portB.1
+symbol sutun3=portB.2
+symbol satir1=portB.3
+symbol satir2=portB.4
+symbol satir3=portB.5
+symbol satir4=portB.6
+portb=0
+
+label:
+  sutun1=1:sutun2=0:sutun3=0
+  IF satir1=1 then s=1
+  IF satir2=1 then s=4
+  if satir3=1 then s=7  
+  
+  sutun1=0:sutun2=1:sutun3=0
+  IF satir1=1 then s=2
+  IF satir2=1 then s=5
+  if satir3=1 then s=8
+  if satir4=1 then s=0
+  
+  sutun1=0:sutun2=0:sutun3=1
+  IF satir1=1 then s=3
+  IF satir2=1 then s=6
+  if satir3=1 then s=9
+  pause 100
+  if s!=10 then'Tuþa basýlmýþsa 
+  write j,s
+  j=j+1
+  gosub basildi
+  endif
+
+
+goto label
+
+basildi:
+   if i=10 then
+   i=0
+   t=128
+   goto terminalyaz
+   endif
+   lcdout $fe,t,#s
+   pause 200
+   t=t+1
+   i=i+1
+   s=10
+return
+
+terminalyaz:
+  for n=0 to 10
+      read n,p
+      hserout [dec p]
+  next n
+  j=0
+  n=0
+  hserout [13,10]
+  lcdout $fe,1
+  s=10
+  pause 50
+goto label
+
+ 
+ 
+ 
+ 
+
+
