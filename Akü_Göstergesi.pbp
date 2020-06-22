@@ -1,0 +1,96 @@
+'****************************************************************
+'*  Name    : UNTITLED.BAS                                      *
+'*  Author  : Salih                                             *
+'*  Notice  : Copyright (c) 2020 [select VIEW...EDITOR OPTIONS] *
+'*          : All Rights Reserved                               *
+'*  Date    : 2.5.2020                                          *
+'*  Version : 1.0                                               *
+'*  Notes   :                                                   *
+'*          :                                                   *
+'****************************************************************
+@ __config _XT_OSC & _WDT_ON & _PWRTE_ON & _LVP_OFF & _CP_OFF
+
+DEFINE LCD_DREG PORTD           'LCD data portunun baðlandýðý pic portu 
+DEFINE LCD_DBIT 0               '4-bit bus için data bit(0yada4) baþlangýç
+DEFINE LCD_RSREG PORTB          'LCD RS in baðlandýðý pic portu 
+DEFINE LCD_RSBIT 0              'RS in baðlandýðý pic portE nin bit numarasý
+DEFINE LCD_EREG PORTB           'LCD E nin baðlandýðý pic portu 
+DEFINE LCD_EBIT 1               'LCD E nin baðlandýðý pic portE nin bit numarasý
+DEFINE LCD_BITS 8               'PortD nin 8 biti veri transferi için kullanýldý
+TRISE=%000                      'Aslýnda PortE.1 direkt topraða çekilse olurdu ama 
+PAUSE 100
+
+DEFINE ADC_BITS 8
+DEFINE ADC_CLOCK 1
+DEFINE ADC_SAPMLEUS 50
+TRISA=%000001
+ADCON1=0
+i var BYTE:j var word:k var byte:m var byte:n var byte:x var byte
+
+
+LCDOUT $fe,$40,31,16,16,16,16,16,31
+LCDOUT $fe,$48,28,4,7,1,7,4,28
+LCDOUT $fe,$50,28,28,31,31,31,28,28
+LCDOUT $fe,$58,28,20,23,17,23,20,28
+LCDOUT $fe,$60,28,4,7,1,7,4,28
+LCDOUT $fe,$68,31,30,30,30,30,30,31
+LCDOUT $fe,$70,31,28,28,28,28,28,31
+LCDOUT $fe,$78,31,24,24,24,24,24,31
+
+label:
+    ADCIN 0,i  
+    j=i*136
+    j=j/255
+    
+    n=j DIG 2
+    k=j dig 1
+    m=j dig 0
+    
+    
+    LCDOUT $fe,1,"Aku:",#n,#k,",",#m,"Volt"
+    
+    IF j>134 THEN x=7
+    IF j<=134 and j>132 then x=6
+    IF j<=132 and j>130 then x=5
+    IF j<=130 and j>128 then x=4
+    IF j<=128 and j>126 then x=3
+    IF j<=126 and j>124 then x=2
+    IF j<=124 THEN x=1
+    
+    SELECT CASE x
+    
+        CASE 1
+            LCDOUT $fe,$C0,0,1," %0"
+            PAUSE 550
+            LCDOUT $fe,1,"Aku:",#n,#k,",",#m,"Volt"
+            LCDOUT $fe,$C2," %0"
+        CASE 2
+            LCDOUT $fe,$C0,7,4," %10"
+            PAUSE 650
+            LCDOUT $fe,$C0,0,1," %10"
+        CASE 3
+            LCDOUT $fe,$C0,6,4," %20"
+        CASE 4
+            LCDOUT $fe,$C0,5,4," %40"
+        CASE 5
+            LCDOUT $fe,$C0,255,4," %60"
+        CASE 6
+            LCDOUT $fe,$C0,255,3," %80"
+        CASE 7
+            LCDOUT $fe,$C0,255,2," %100"
+    END SELECT
+    PAUSE 600
+    
+GOTO label
+
+
+
+
+
+
+
+
+
+
+
+
