@@ -1,0 +1,291 @@
+'****************************************************************
+'*  Name    : UNTITLED.BAS                                      *
+'*  Author  : Salih                                             *
+'*  Notice  : Copyright (c) 2020 [select VIEW...EDITOR OPTIONS] *
+'*          : All Rights Reserved                               *
+'*  Date    : 18.4.2020                                         *
+'*  Version : 1.0                                               *
+'*  Notes   :                                                   *
+'*          :                                                   *
+'****************************************************************
+@ __config _XT_OSC & _WDT_ON & _PWRTE_ON & _LVP_OFF & _CP_OFF
+
+DEFINE LCD_DREG PORTD           'LCD data portunun baðlandýðý pic portu 
+DEFINE LCD_DBIT 0               '4-bit bus için data bit(0yada4) baþlangýç
+DEFINE LCD_RSREG PORTE          'LCD RS in baðlandýðý pic portu 
+DEFINE LCD_RSBIT 0              'RS in baðlandýðý pic portE nin bit numarasý
+DEFINE LCD_EREG PORTE           'LCD E nin baðlandýðý pic portu 
+DEFINE LCD_EBIT 2               'LCD E nin baðlandýðý pic portE nin bit numarasý
+DEFINE LCD_BITS 8               'PortD nin 8 biti veri transferi için kullanýldý
+TRISE=%000                      'Aslýnda PortE.1 direkt topraða çekilse olurdu ama 
+PortE.1=0                       ' PortE.1=0 olarak yaptýk
+ADCON1=7                        'porta ve porte yi dijitale ayarla
+PAUSE 100
+
+TRISB=0
+LCDOUT $fe,$40,7,5,7,0,0,0,0 'derece karakteri 0. registerda
+
+SYMBOL sensor=portb.0
+nem var byte
+ondaliknem var byte
+sicaklik var byte
+ondaliksicaklik var byte
+kontrol var byte 'nem ve sýcaklýgýn toplamýný verir
+
+i Var byte
+n VAR BYTE
+
+basla:
+
+    TRISB.0=0 'çýkýþ olarak tanýmladýk
+
+        sensor=0
+            pause 18 '18 Ms boyunca 0  start 
+        sensor=1
+            PAUSEUS 40 've 40 mikrosaniye boyunca 1 vererek sensor uyandýrdýk
+
+    TRISB.0=1 'artýk pic'e veri almaya hazýrýz.
+        while sensor=0 'sensorden 1 gelene kadar bekle. 
+        WEND '80 mikrosaniye sonra burdan çýkacak ve sensor 1 olacak.
+            PAUSEUS 85
+            
+    NEM=0 'Nem baslangicta 0 = %00000000
+    sicaklik=0
+    
+'il gelen veri nem    
+'msb den baþlayýp 8 bit alacaðýz her bir biti tek tek.
+'lojik 1 verilirken 26-28 içerisnde 0 olarak iþle, 28-70 arasý 1    
+'zaten nem 0 atadýðýmýzdan 70i kontrol etsek yeter.
+'her bit'in geliþ süresi 50 mikrosaniye.
+'msb den lsb ye doðru
+        
+            FOR i=7 TO 0 STEP -1
+                WHILE sensor=0  'önce lojik 0 veriyor bunu check edelim.50ms bekleme
+                WEND
+                PAUSEUS 35 '28 - 70 arasýnda bir deðer ile 28 kontrolüne gerek kalmadý
+                iF sensor=1 then
+                nem.0[i]=1
+                endif
+                next i
+          
+
+        
+            FOR i=7 TO 0 STEP -1
+                WHILE sensor=0  'önce lojik 0 veriyor bunu check edelim.50ms bekleme
+                WEND
+                PAUSEUS 36 '28 - 70 arasýnda bir deðer ile 28 kontrolüne gerek kalmadý
+                iF sensor=1 then
+                ondaliknem.0[i]=1
+                endif
+                next i
+      
+        
+      
+            FOR i=7 TO 0 STEP -1
+                WHILE sensor=0  'önce lojik 0 veriyor bunu check edelim.50ms bekleme
+                WEND
+                PAUSEUS 37 '28 - 70 arasýnda bir deðer ile 28 kontrolüne gerek kalmadý
+                iF sensor=1 then 
+                sicaklik.0[i]=1
+                endif
+                next i
+        
+
+       
+            FOR i=7 TO 0 STEP -1
+                WHILE sensor=0  'önce lojik 0 veriyor bunu check edelim.50ms bekleme
+                WEND
+                PAUSEUS 38 '28 - 70 arasýnda bir deðer ile 28 kontrolüne gerek kalmadý
+                iF sensor=1 then 
+                ondaliksicaklik.0[i]=1
+                endif
+                next i
+        
+
+        
+            FOR i=7 TO 0 STEP -1
+                WHILE sensor=0  'önce lojik 0 veriyor bunu check edelim.50ms bekleme
+                WEND
+                PAUSEUS 39 '28 - 70 arasýnda bir deðer ile 28 kontrolüne gerek kalmadý
+                iF sensor=1 then 
+                kontrol.0[i]=1
+                endif
+                next i
+        
+
+    If sicaklik=25 THEN
+        IF nem<=60 then n=1
+        IF nem>60 then n=2
+    ENDIF
+    
+    If sicaklik=26 THEN
+        IF nem<=45 then n=1
+        IF nem>45 then n=2
+    ENDIF
+
+    If sicaklik=27 THEN
+        IF nem<=20 then n=1
+        IF nem>20 then n=2
+    ENDIF
+    
+    If sicaklik=28 THEN
+        IF nem<=15 then n=1
+        IF nem>15 AND NEM<=85 then n=2
+        IF nem>85 then n=3
+    ENDIF
+    
+    If sicaklik=29 THEN
+        IF nem<=70 then n=2
+        IF nem>70 then n=3
+    ENDIF
+    
+    If sicaklik=30 THEN
+        IF nem<=55 then n=2
+        IF nem>55 AND NEM<=90 then n=3
+        IF nem>90 then n=4
+    ENDIF
+    
+     If sicaklik=31 THEN
+        IF nem<=45 then n=2
+        IF nem>45 AND NEM<=80 then n=3
+        IF nem>80 then n=4
+    ENDIF
+    
+     If sicaklik=32 THEN
+        IF nem<=35 then n=2
+        IF nem>35 AND NEM<=70 then n=3
+        IF nem>70 then n=4
+    ENDIF
+    
+     If sicaklik=33 THEN
+        IF nem<=30 then n=2
+        IF nem>30 AND NEM<=60 then n=3
+        IF nem>60 and nem<=85 then n=4
+        IF nem>85 then n=5
+    ENDIF
+    
+     If sicaklik=34 THEN
+        IF nem<=25 then n=2
+        IF nem>25 AND NEM<=55 then n=3
+        IF nem>55 and nem<=80 then n=4
+        IF nem>80 then n=5
+    ENDIF
+    
+     If sicaklik=35 THEN
+        IF nem<=10 then n=2
+        IF nem>10 AND NEM<=50 then n=3
+        IF nem>50 and nem<=75 then n=4
+        if nem>75 then n=5
+    ENDIF
+    
+     If sicaklik=36 THEN
+        IF nem<=45 then n=3
+        IF nem>45 AND NEM<=65 then n=4
+        IF nem>65 then n=5
+    ENDIF
+    
+    If sicaklik=37 THEN
+        IF nem<=35 then n=3
+        IF nem>35 AND NEM<=60 then n=4
+        IF nem>60 then n=5
+    ENDIF
+    
+    If sicaklik=38 THEN
+        IF nem<=30 then n=3
+        IF nem>30 AND NEM<=55 then n=4
+        IF nem>55 then n=5
+    ENDIF
+    
+    If sicaklik=39 THEN
+        IF nem<=30 then n=3
+        IF nem>30 AND NEM<=50 then n=4
+        IF nem>50 then n=5
+    ENDIF
+    
+    If sicaklik=40 THEN
+        IF nem<=25 then n=3
+        IF nem>25 AND NEM<=45 then n=4
+        IF nem>45 then n=5
+    ENDIF
+    
+    If sicaklik=41 THEN
+        IF nem<=20 then n=3
+        IF nem>20 AND NEM<=40 then n=4
+        IF nem>40 and nem<=85 then n=5
+    ENDIF
+    
+    If sicaklik=42 THEN
+        IF nem<=15 then n=3
+        IF nem>15 AND NEM<=40 then n=4
+        IF nem>40 and nem<=80 then n=5
+    ENDIF
+    
+    If sicaklik=43 THEN
+        IF nem<=10 then n=3
+        IF nem>10 AND NEM<=35 then n=4
+        IF nem>35 and nem<=75 then n=5
+    ENDIF
+    
+    If sicaklik=44 THEN
+        IF nem<=5 then n=3
+        IF nem>5 AND NEM<=30 then n=4
+        IF nem>30 and nem<=70 then n=5
+    ENDIF
+    
+    If sicaklik=45 THEN
+        IF nem<=5 then n=3
+        IF nem>5 AND NEM<=25 then n=4
+        IF nem>25 and nem<=65 then n=5
+    ENDIF
+    
+    If sicaklik=46 THEN
+        IF nem<=5 then n=3
+        IF nem>5 AND NEM<=25 then n=4
+        IF nem>25 and nem<=65 then n=5
+    ENDIF
+    
+    If sicaklik=47 THEN
+        IF nem<=20 then n=4
+        IF nem>20 and nem<=60 then n=5
+    ENDIF
+    
+    If sicaklik=48 THEN
+        IF nem<=20 then n=4
+        IF nem>20 and nem<=55 then n=5
+    ENDIF
+    
+    If sicaklik=49 THEN
+        IF nem<=15 then n=4
+        IF nem>15 and nem<=50 then n=5
+    ENDIF
+    
+    If sicaklik=50 THEN
+        IF nem<=15 then n=4
+        IF nem>15 and nem<=50 then n=5
+    ENDIF
+    
+    
+    LCDOUT $fe,1,"Nem =",#nem,"%"
+    LCDOUT $fe,$C0,"Sicaklik =",#sicaklik,0,"C"
+    
+    if n=1 then
+    LCDOUT $fe,$94,"Soguk"
+    ENDIF
+    
+    if n=2 then
+    LCDOUT $fe,$94,"Sicak"
+    ENDIF
+    
+    if n=3 then
+    LCDOUT $fe,$94,"Cok Sicak"
+    ENDIF
+    
+    if n=4 then
+    LCDOUT $fe,$94,"Tehlikeli Sicak"
+    ENDIF
+    
+    if n=5 then
+    LCDOUT $fe,$94,"Cok Tehlikeli Sicak"
+    ENDIF
+    
+    GOTO basla          
